@@ -99,3 +99,25 @@ async def save_report(dataset_id: int, template: str, title: str, content: str) 
     finally:
         if conn:
             await conn.close()
+
+
+async def get_report(id: int):
+
+    conn = None
+
+    try:
+        conn = await asyncpg.connect(NEON_DATABASE_URL)
+        report = await conn.fetchrow(
+            """
+            SELECT * FROM reports WHERE id = $1
+            """, id
+        )
+
+        if report:
+            return dict(report)
+
+        return None
+    except Exception as e:
+        raise e
+    finally:
+        pass

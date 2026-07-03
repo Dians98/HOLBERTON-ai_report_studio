@@ -38,7 +38,7 @@ export default function HomePage() {
           <div key={s.id} className="flex items-center">
             <div
               className={cn(
-                "flex size-10 items-center justify-center rounded-full text-sm font-medium transition-colors",
+                "flex size-10 items-center justify-center rounded text-sm font-medium transition-colors",
                 step === s.id
                   ? "bg-primary text-primary-foreground"
                   : step > s.id
