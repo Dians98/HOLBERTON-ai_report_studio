@@ -1,5 +1,6 @@
+import asyncio
 import os
-import uuid
+import uuid  # Keep for temporary processing if needed
 import csv
 import json
 import io
@@ -9,12 +10,15 @@ from fastapi import FastAPI, APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import Response
 
 from models import GenerateReportRequest
+from config import NEON_DATABASE_URL
+from neon_client import get_dataset, init_db, save_dataset, save_report
 
+UPLOAD_DIR = Path(__file__).parent / "storage" / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("uvicorn.error")
-UPLOAD_DIR = Path(__file__).parent / "storage" / "uploads"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
 
 app = FastAPI(title="AI Report Studio API")
 api_router = APIRouter(prefix="/api")
@@ -79,58 +83,75 @@ async def upload_file(file: UploadFile = File(...)):
         raise HTTPException(
             status_code=413, detail="File too large (max 10 MB)")
 
-    dataset_id = str(uuid.uuid4())
+    # Use a temporary UUID for local file processing before DB insertion
+    # This is needed for detect_columns_and_preview if it relies on a filename structure
+    temp_dataset_id_for_processing = str(uuid.uuid4())
     safe_name = sanitize_filename(file.filename or "upload")
+
+    # Detect columns and preview using the content directly
     columns, preview = detect_columns_and_preview(content, file.filename or "")
 
-    storage_path = UPLOAD_DIR / f"{dataset_id}_{safe_name}"
+    # Save dataset metadata to the database
+    # For now, file_path is a placeholder as we are not using Supabase Storage yet.
+    # In a real scenario with Supabase Storage, this would be the path in Supabase.
+    dataset_id = await save_dataset(safe_name, f"{temp_dataset_id_for_processing}_{safe_name}", columns)
+
+    if dataset_id is None:
+        raise HTTPException(
+            status_code=500, detail="Failed to save dataset metadata")
+
+    storage_path = UPLOAD_DIR / f"{temp_dataset_id_for_processing}_{safe_name}"
     with open(storage_path, "wb") as f:
         f.write(content)
 
     return {
-        "id": dataset_id,
+        "id": dataset_id,  # Return the database ID
         "filename": safe_name,
         "columns": columns,
         "preview": preview,
     }
 
-reports_store: dict[str, dict] = {}
-next_report_id = 1
-
 
 @api_router.post("/reports")
 async def generate_report(body: GenerateReportRequest):
-    global next_report_id
+    # 1. Get dataset info from DB using the provided dataset_id
 
-    # 1. Trouver le fichier uploadé
-    dataset_id = body.dataset_id
-    file_path = None
-    for f in UPLOAD_DIR.iterdir():
-        if f.is_file() and f.name.startswith(f"{dataset_id}_"):
-            file_path = f
-            break
+    dataset_info = await get_dataset(body.dataset_id)
 
-    if not file_path:
+    if not dataset_info:
         raise HTTPException(status_code=404, detail="Dataset not found")
 
-    # 2. Déterminer le template
+    file_path = Path(__file__).parent / "storage" / "uploads" / \
+        dataset_info.get("file_path")  # Get the path from DB
+    if not file_path:
+        raise HTTPException(
+            status_code=404, detail="Dataset file path not found")
+
+    # 2. Determine the template
     template_name = body.template
     template_path = Path(__file__).parent / "templates" / f"{template_name}.md"
     if not template_path.is_file():
         raise HTTPException(
             status_code=400, detail=f"Template '{template_name}' not found")
 
-    # 3. Lire le fichier et le template
-    with open(file_path, "rb") as f:
-        content = f.read()
+    # 3. Read the file and the template
+    # NOTE: In this MVP, we are reading the file from the local storage path.
+    # If Supabase Storage were integrated, this would involve downloading from Supabase.
+    try:
+        with open(file_path, "rb") as f:
+            content = f.read()
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=404, detail=f"Dataset file not found at path: {file_path}")
+
     template_content = template_path.read_text()
 
-    # 4. Calculer les stats (à implémenter dans stats.py)
+    # 4. Compute metrics (using stats.py)
     from stats import compute_metrics
-    metrics = compute_metrics(content, file_path.name)
-    # Pour l'instant, metrics = {} si stats.py est vide
+    metrics = compute_metrics(content, os.path.basename(
+        file_path))  # Pass filename for stats.py
 
-    # 5. Appeler l'IA
+    # 5. Call the AI
     from ai import ask
     prompt = f"""You are a data analyst. Generate a report using this template:
 
@@ -143,93 +164,20 @@ async def generate_report(body: GenerateReportRequest):
     """
     report_content = ask(prompt)
 
-    # 6. Sauvegarder le rapport
-    report_id = str(next_report_id)
-    next_report_id += 1
-    reports_store[report_id] = {
-        "id": report_id,
-        "dataset_id": dataset_id,
-        "template": template_name,
-        "title": f"Report #{report_id}",
-        "content": report_content,
-        "status": "completed",
-        "created_at": "2026-07-03",
-    }
+    # 6. Save the report to the database
+    report_id = await save_report(
+        dataset_id=body.dataset_id,
+        template=template_name,
+        # More descriptive title
+        title=f"Report for Dataset #{body.dataset_id}",
+        content=report_content
+    )
 
-    logger.info(f"REPORT ID : {report_id}")
+    if report_id is None:
+        raise HTTPException(status_code=500, detail="Failed to save report")
+
+    logger.info(f"Report generated and saved with ID: {report_id}")
     return {"id": report_id}
-
-
-@api_router.get("/reports")
-async def list_reports():
-    return [
-        {
-            "id": rid,
-            "title": r["title"],
-            "template": r["template"],
-            "status": r["status"],
-            "created_at": r["created_at"],
-        }
-        for rid, r in reports_store.items()
-    ]
-
-
-@api_router.get("/reports/{report_id}")
-async def get_report(report_id: str):
-    report = reports_store.get(report_id)
-    if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
-    return report
-
-
-@api_router.delete("/reports/{report_id}")
-async def delete_report(report_id: str):
-    if report_id not in reports_store:
-        raise HTTPException(status_code=404, detail="Report not found")
-    del reports_store[report_id]
-    return {"ok": True}
-
-
-@api_router.get("/reports/{report_id}/export")
-async def export_report(report_id: str, format: str = "markdown"):
-    report = reports_store.get(report_id)
-    if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
-
-    content = report["content"]
-    content_type = "text/markdown"
-    filename = f"report_{report_id}.md"
-
-    if format == "html":
-        content = f"<html><body>{content}</body></html>"
-        content_type = "text/html"
-        filename = f"report_{report_id}.html"
-    elif format == "pdf":
-        content = f"<html><body>{content}</body></html>"
-        content_type = "text/html"
-        filename = f"report_{report_id}.html"
-
-    return Response(content=content, media_type=content_type, headers={
-        "Content-Disposition": f"attachment; filename={filename}",
-    })
-
-
-@api_router.get("/datasets/{dataset_id}")
-async def get_dataset(dataset_id: str):
-    for f in UPLOAD_DIR.iterdir():
-        if f.is_file() and f.name.startswith(f"{dataset_id}_"):
-            with open(f, "rb") as fh:
-                content = fh.read()
-            columns, preview = detect_columns_and_preview(content, f.name)
-            original = f.name[len(dataset_id) + 1:]
-            return {
-                "id": dataset_id,
-                "filename": original,
-                "columns": columns,
-                "preview": preview,
-            }
-
-    raise HTTPException(status_code=404, detail="Dataset not found")
 
 
 app.include_router(api_router)
