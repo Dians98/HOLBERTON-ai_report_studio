@@ -5,7 +5,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main>
+      <main className="w-full flex flex-col flex-1">
         <SidebarTrigger />
         {children}
       </main>

@@ -61,19 +61,18 @@ export function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
 
-            {/* --- Pied de page : Profil utilisateur ou déconnexion ---
+
             <SidebarFooter className="border-t p-4">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton >
                             <a href="/profile" className="flex items-center gap-3">
-                                <User className="h-4 w-4" />
-                                <span className="group-data-[collapsible=icon]:hidden font-medium">Mon Compte</span>
+                                <span className="group-data-[collapsible=icon]:hidden font-medium">&copy; {new Date().getFullYear()} AI Report Studio. </span>
                             </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
-            </SidebarFooter> */}
+            </SidebarFooter>
         </Sidebar>
     )
 }
