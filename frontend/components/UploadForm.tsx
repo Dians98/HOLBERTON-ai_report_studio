@@ -12,12 +12,22 @@ export default function UploadForm({ onSuccess }: { onSuccess?: (datasetId: stri
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
+  const ALLOWED_EXTENSIONS = [".csv", ".json"]
+
   const onDrop = useCallback((accepted: File[], rejected: import("react-dropzone").FileRejection[]) => {
     setError(null)
     setSuccess(false)
 
-    if (rejected.length > 0) {
-      setError(rejected[0].errors[0]?.message || "Invalid file")
+    const allRejected = [
+      ...rejected,
+      ...accepted.filter((f) => {
+        const ext = f.name.substring(f.name.lastIndexOf(".")).toLowerCase()
+        return !ALLOWED_EXTENSIONS.includes(ext)
+      }),
+    ]
+
+    if (allRejected.length > 0) {
+      setError("Only CSV and JSON files are allowed")
       return
     }
 
@@ -28,11 +38,6 @@ export default function UploadForm({ onSuccess }: { onSuccess?: (datasetId: stri
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      "text/csv": [".csv"],
-      "application/json": [".json"],
-      "text/json": [".json"],
-    },
     maxFiles: 1,
     maxSize: 10 * 1024 * 1024,
   })

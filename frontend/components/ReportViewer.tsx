@@ -12,7 +12,7 @@ type Report = {
   created_at: string
 }
 
-export default function ReportViewer({ reportId }: { reportId: string }) {
+export default function ReportViewer({ reportId, onReset }: { reportId: string; onReset?: () => void }) {
   const [report, setReport] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -95,6 +95,18 @@ export default function ReportViewer({ reportId }: { reportId: string }) {
         {report.content.split("\n").map((line, i) => (
           <p key={i}>{line}</p>
         ))}
+      </div>
+
+      <div className="mt-8 text-center">
+        <Button
+          type="button"
+          size="lg"
+          className="mt-6 w-full"
+
+          onClick={onReset}
+        >
+          Generate new report
+        </Button>
       </div>
     </div>
   )

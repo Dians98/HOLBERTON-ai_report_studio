@@ -17,6 +17,12 @@ export default function HomePage() {
   const [datasetId, setDatasetId] = useState<string | null>(null)
   const [reportId, setReportId] = useState<string | null>(null)
 
+  const handleReset = () => {
+    setStep(1)
+    setDatasetId(null)
+    setReportId(null)
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="mb-12 text-center">
@@ -85,7 +91,7 @@ export default function HomePage() {
           />
         )}
 
-        {step === 3 && reportId && <ReportViewer reportId={reportId} />}
+        {step === 3 && reportId && <ReportViewer reportId={reportId} onReset={handleReset} />}
       </section>
     </div>
   )

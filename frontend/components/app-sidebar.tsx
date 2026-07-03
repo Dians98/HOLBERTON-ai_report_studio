@@ -24,7 +24,6 @@ const navigationItems = [
     { title: "Accueil", url: "/", icon: Home },
     { title: "Historique", url: "/history", icon: History },
     { title: "Rapports", url: "/report", icon: BarChart3 },
-    { title: "Paramètres", url: "/settings", icon: Settings },
 ]
 
 export function AppSidebar() {
