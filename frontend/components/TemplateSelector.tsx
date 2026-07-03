@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { FileText, BarChart3, AlertTriangle, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -37,6 +37,8 @@ export default function TemplateSelector({
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+
+
   const handleGenerate = async () => {
     if (!selected) return
 
@@ -44,6 +46,7 @@ export default function TemplateSelector({
     setError(null)
 
     try {
+
       const res = await fetch("/api/reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -31,6 +31,7 @@ export default function UploadForm({ onSuccess }: { onSuccess?: (datasetId: stri
     accept: {
       "text/csv": [".csv"],
       "application/json": [".json"],
+      "text/json": [".json"],
     },
     maxFiles: 1,
     maxSize: 10 * 1024 * 1024,
@@ -75,16 +76,23 @@ export default function UploadForm({ onSuccess }: { onSuccess?: (datasetId: stri
 
   return (
     <div className="mx-auto max-w-xl">
+      {error && (
+        <div className=" rounded-3xl bg-destructive/10 px-4 py-2 text-sm text-destructive text-center">
+          {error}
+        </div>
+      )}
+
       <div
         {...getRootProps()}
         className={cn(
-          "relative flex cursor-pointer flex-col items-center gap-4 rounded-3xl border-2 border-dashed p-12 text-center transition-colors",
+          "relative flex cursor-pointer flex-col items-center gap-4 rounded-3xl border-2 border-dashed p-12 text-center transition-colors mt-10",
           isDragActive
             ? "border-primary bg-primary/5"
             : "border-muted-foreground/25 hover:border-muted-foreground/50",
           file && "pointer-events-none opacity-50"
         )}
       >
+
         <input {...getInputProps()} />
         <div className="flex size-14 items-center justify-center rounded-full bg-muted">
           <Upload className="size-6 text-muted-foreground" />
@@ -120,11 +128,7 @@ export default function UploadForm({ onSuccess }: { onSuccess?: (datasetId: stri
         </div>
       )}
 
-      {error && (
-        <div className="mt-3 rounded-3xl bg-destructive/10 px-4 py-2 text-sm text-destructive">
-          {error}
-        </div>
-      )}
+
 
       <Button
         type="button"

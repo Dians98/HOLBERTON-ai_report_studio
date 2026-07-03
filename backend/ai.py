@@ -12,7 +12,7 @@ base_url = os.getenv("AI_BASE_URL")
 model_name = os.getenv("AI_MODEL")
 
 print(
-    f"🔌 Connexion au fournisseur : {provider.upper()} (Modèle: {model_name})")
+    f"Connexion au fournisseur : {provider.upper()} (Modele: {model_name})")
 
 # 3. Initialise le client OpenAI générique avec les bonnes adresses
 client = OpenAI(

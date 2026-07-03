@@ -2,6 +2,11 @@
 
 This project is currently empty. As development progresses, this file should be updated with project-specific guidance to help future OpenCode sessions ramp up quickly and avoid common pitfalls.
 
+## Quick Start
+- Run `.\dev.ps1` from the repo root to start both servers.
+- Frontend: `http://localhost:3000`
+- Backend:  `http://localhost:8000`
+
 ## General Operating Environment
 -   **OS:** `win32`
 -   **Shell:** `PowerShell 5.1`
