@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Timestamp } from "next/dist/server/lib/cache-handlers/types"
-import { MoreHorizontal, Eye, Trash2 } from "lucide-react"
+import { Eye, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
