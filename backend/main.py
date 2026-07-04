@@ -11,7 +11,7 @@ from fastapi.responses import Response
 
 from models import GenerateReportRequest
 from config import NEON_DATABASE_URL
-from neon_client import get_dataset, get_report, init_db, save_dataset, save_report
+from neon_client import get_dataset, get_report, init_db, save_dataset, save_report, get_reports
 
 UPLOAD_DIR = Path(__file__).parent / "storage" / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -202,13 +202,25 @@ async def get_report_route(report_id: str):
 
     return report
 
-app.include_router(api_router)
 
+@api_router.get("/reports")
+async def list_all_reports():
+    logger.info("HELLO")
 
-# ---------------------------------------------------------------------------
-# Health root endpoint — simple JSON, no UI
-# ---------------------------------------------------------------------------
+    try:
+        reports = await get_reports()
+        if not reports:
+            return "No repports actually"
+
+        return reports
+    except Exception as e:
+        raise e
+    finally:
+        pass
+
 
 @app.get("/")
-async def root():
+async def home():
     return {"service": "AI Report Studio API", "status": "running", "docs": "/docs"}
+
+app.include_router(api_router)

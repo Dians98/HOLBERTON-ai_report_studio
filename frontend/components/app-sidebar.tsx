@@ -21,9 +21,9 @@ import {
 
 // LIENS DE NAVIGATIONS
 const navigationItems = [
-    { title: "Accueil", url: "/", icon: Home },
-    { title: "Historique", url: "/history", icon: History },
-    { title: "Rapports", url: "/report", icon: BarChart3 },
+    { title: "Dashboard", url: "/", icon: Home },
+    // { title: "History", url: "/history", icon: History },
+    { title: "Reports", url: "/report", icon: BarChart3 },
 ]
 
 export function AppSidebar() {

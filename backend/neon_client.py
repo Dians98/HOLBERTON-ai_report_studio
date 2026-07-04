@@ -120,4 +120,25 @@ async def get_report(id: int):
     except Exception as e:
         raise e
     finally:
-        pass
+        if conn:
+            await conn.close()
+
+
+async def get_reports():
+
+    conn = None
+
+    try:
+        conn = await asyncpg.connect(NEON_DATABASE_URL)
+        # Use fetch to get all rows as a list of Record objects
+        rows = await conn.fetch(
+            """
+            SELECT * FROM reports
+            """
+        )
+        return rows
+    except Exception as e:
+        raise e
+    finally:
+        if conn:
+            await conn.close()
