@@ -180,27 +180,27 @@ async def generate_report(body: GenerateReportRequest):
     return {"id": report_id}
 
 
-@api_router.get("/reports/{report_id}")
-async def get_report_route(report_id: str):
-    logger.info("tafiditra")
-    try:
-        report_id_int = int(report_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid report ID format")
-    logger.info("mivoka")
-    # Appel à la fonction get_report de ton neon_client.py
-    report = await get_report(report_id_int)
+# @api_router.get("/reports/{report_id}")
+# async def get_report_route(report_id: str):
+#     logger.info("tafiditra")
+#     try:
+#         report_id_int = int(report_id)
+#     except ValueError:
+#         raise HTTPException(status_code=400, detail="Invalid report ID format")
+#     logger.info("mivoka")
+#     # Appel à la fonction get_report de ton neon_client.py
+#     report = await get_report(report_id_int)
 
-    if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
+#     if not report:
+#         raise HTTPException(status_code=404, detail="Report not found")
 
-    # Convertir les objets datetime de PostgreSQL en chaînes ISO pour le JSON
-    if report.get('created_at'):
-        report['created_at'] = report['created_at'].isoformat()
-    if report.get('updated_at'):
-        report['updated_at'] = report['updated_at'].isoformat()
+#     # Convertir les objets datetime de PostgreSQL en chaînes ISO pour le JSON
+#     if report.get('created_at'):
+#         report['created_at'] = report['created_at'].isoformat()
+#     if report.get('updated_at'):
+#         report['updated_at'] = report['updated_at'].isoformat()
 
-    return report
+#     return report
 
 
 @api_router.get("/reports")
