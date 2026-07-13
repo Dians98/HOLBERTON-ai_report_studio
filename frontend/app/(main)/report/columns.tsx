@@ -43,7 +43,7 @@ function ViewReport({ report }: { report: Reports }) {
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 cursor-pointer"
                 onClick={() => router.push(`/report/${report.id}`)}
             >
                 <Eye className="h-4 w-4" />

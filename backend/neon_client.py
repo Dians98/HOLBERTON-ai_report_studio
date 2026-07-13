@@ -133,7 +133,7 @@ async def get_reports():
         # Use fetch to get all rows as a list of Record objects
         rows = await conn.fetch(
             """
-            SELECT * FROM reports
+            SELECT * FROM reports ORDER BY id DESC
             """
         )
         return rows
