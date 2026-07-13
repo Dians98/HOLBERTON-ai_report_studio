@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from "react"
-
+import { Spinner } from "@/components/ui/spinner"
 
 
 export default function ReportDetail({ reportId }: { reportId: string }) {
@@ -35,7 +35,11 @@ export default function ReportDetail({ reportId }: { reportId: string }) {
     }, [reportId])
 
     if (!report) {
-        return <div>Loading...</div>
+        return (
+            <div className="flex items-center gap-4">
+                <Spinner className="size-8" />
+            </div>
+        )
     }
     return (
         <div className="space-y-6">
