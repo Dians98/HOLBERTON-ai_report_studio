@@ -1,7 +1,9 @@
-import ReportDetail from "../ReportDetail"
+import ReportDetail from "./ReportDetail"
+
 
 export default async function Report({ params }: { params: { id: string } }) {
     const { id } = await params
+
 
     return (
         <div className="container mx-auto px-4 py-8">
