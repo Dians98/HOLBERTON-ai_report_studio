@@ -75,7 +75,7 @@ export default function ReportViewer({ reportId, onReset }: { reportId: string; 
             {new Date(report.created_at).toLocaleDateString()}
           </p>
         </div>
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => handleExport("markdown")}>
             <FileText className="size-4" />
             MD
@@ -88,7 +88,7 @@ export default function ReportViewer({ reportId, onReset }: { reportId: string; 
             <Download className="size-4" />
             PDF
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <div className="prose prose-gray max-w-none rounded-3xl border bg-card p-8 dark:prose-invert">

@@ -133,10 +133,33 @@ async def get_reports():
         # Use fetch to get all rows as a list of Record objects
         rows = await conn.fetch(
             """
-            SELECT * FROM reports
+            SELECT * FROM reports ORDER BY id DESC
             """
         )
         return rows
+    except Exception as e:
+        raise e
+    finally:
+        if conn:
+            await conn.close()
+
+
+async def fetch_report_by_id(id: int) -> Optional[Dict[str, Any]]:
+    """Fetches a report by its ID."""
+    conn = None
+
+    try:
+        conn = await asyncpg.connect(NEON_DATABASE_URL)
+        # Use fetch to get all rows as a list of Record objects
+        row = await conn.fetchrow(
+            """
+            SELECT * FROM reports WHERE id = $1
+            """, id
+        )
+        if row:
+            return dict(row)
+
+        return None
     except Exception as e:
         raise e
     finally:

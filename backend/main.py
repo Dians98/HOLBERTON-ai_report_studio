@@ -11,7 +11,7 @@ from fastapi.responses import Response
 
 from models import GenerateReportRequest
 from config import NEON_DATABASE_URL
-from neon_client import get_dataset, get_report, init_db, save_dataset, save_report, get_reports
+import neon_client
 
 UPLOAD_DIR = Path(__file__).parent / "storage" / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -94,7 +94,7 @@ async def upload_file(file: UploadFile = File(...)):
     # Save dataset metadata to the database
     # For now, file_path is a placeholder as we are not using Supabase Storage yet.
     # In a real scenario with Supabase Storage, this would be the path in Supabase.
-    dataset_id = await save_dataset(safe_name, f"{temp_dataset_id_for_processing}_{safe_name}", columns)
+    dataset_id = await neon_client.save_dataset(safe_name, f"{temp_dataset_id_for_processing}_{safe_name}", columns)
 
     if dataset_id is None:
         raise HTTPException(
@@ -116,7 +116,7 @@ async def upload_file(file: UploadFile = File(...)):
 async def generate_report(body: GenerateReportRequest):
     # 1. Get dataset info from DB using the provided dataset_id
 
-    dataset_info = await get_dataset(body.dataset_id)
+    dataset_info = await neon_client.get_dataset(body.dataset_id)
 
     if not dataset_info:
         raise HTTPException(status_code=404, detail="Dataset not found")
@@ -165,7 +165,7 @@ async def generate_report(body: GenerateReportRequest):
     report_content = ask(prompt)
 
     # 6. Save the report to the database
-    report_id = await save_report(
+    report_id = await neon_client.save_report(
         dataset_id=body.dataset_id,
         template=template_name,
         # More descriptive title
@@ -180,35 +180,11 @@ async def generate_report(body: GenerateReportRequest):
     return {"id": report_id}
 
 
-@api_router.get("/reports/{report_id}")
-async def get_report_route(report_id: str):
-    logger.info("tafiditra")
-    try:
-        report_id_int = int(report_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid report ID format")
-    logger.info("mivoka")
-    # Appel à la fonction get_report de ton neon_client.py
-    report = await get_report(report_id_int)
-
-    if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
-
-    # Convertir les objets datetime de PostgreSQL en chaînes ISO pour le JSON
-    if report.get('created_at'):
-        report['created_at'] = report['created_at'].isoformat()
-    if report.get('updated_at'):
-        report['updated_at'] = report['updated_at'].isoformat()
-
-    return report
-
-
 @api_router.get("/reports")
 async def list_all_reports():
-    logger.info("HELLO")
 
     try:
-        reports = await get_reports()
+        reports = await neon_client.get_reports()
         if not reports:
             return "No repports actually"
 
@@ -217,6 +193,15 @@ async def list_all_reports():
         raise e
     finally:
         pass
+
+
+@api_router.get("/reports/{report_id}")
+async def get_report(report_id: int):  # ← utiliser int directement comme type
+    report = await neon_client.get_report(report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    logger.info(f"Report retrieved successfully  : {report}")
+    return report
 
 
 @app.get("/")
